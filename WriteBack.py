@@ -14,3 +14,6 @@ class WriteBack(WritePolicy):
             self.main_memory.write(address, cache_line.data)
             return True
         return False
+
+    def handle_write_miss(self, address: int, data) -> bool:
+        return True

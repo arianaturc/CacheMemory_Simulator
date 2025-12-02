@@ -71,12 +71,11 @@ class CacheController:
 
                 return
 
-        self.statistics.count_misses()
-        '''
-         allocate = self.write_policy.handle_write_miss(address, data) 
-         if allocate:
-            self._handle_miss(address, tag, candidate_indices, is_write=True, write_data=data)
-         '''
+            self.statistics.count_misses()
+            allocate = self.write_policy.handle_write_miss(address, data)
+            if allocate:
+                self.handle_miss(address, tag, candidate_lines, is_write=True, write_data=data)
+
 
     def handle_miss(self, address: int, tag: int, candidate_lines, is_write: bool, write_data = None):
         #check for empty lines
@@ -122,7 +121,7 @@ class CacheController:
         return None
 
     def get_statistics(self) -> Statistics:
-        return self.statistics
+        return self.statistics.display_statistics()
 
     def display_cache_state(self):
         print(f"\nCache State:")

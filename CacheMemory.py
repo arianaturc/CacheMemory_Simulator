@@ -1,7 +1,7 @@
 from CacheLine import CacheLine
 
 
-class CacheMemory():
+class CacheMemory:
     def __init__(self, num_lines: int):
         self.num_lines = num_lines
         self.lines = [CacheLine() for _ in range(num_lines)]

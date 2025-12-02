@@ -20,9 +20,10 @@ if __name__ == "__main__":
     for i in range(0, 2000, 64):
         main_memory.write(i, f"Data_{i}")
 
-    print("-" * 28)
+    # DIRECT MAPPING SIMULATION
+    print("=" * 28)
     print("DIRECT MAPPING SIMULATION")
-    print("-" * 28)
+    print("=" * 28)
     print(f"Cache: {cache_size} bytes, Block: {block_size} bytes")
 
     num_lines = cache_size // block_size
@@ -43,33 +44,30 @@ if __name__ == "__main__":
         print(f"  Read: {data}")
 
     controller.display_cache_state()
-    print(f"\n{controller.get_statistics()}")
+    controller.get_statistics()
 
 
 
-    # ===== FULLY ASSOCIATIVE MAPPING EXAMPLE =====
-    print("\n\n" + "=" * 70)
+    # FULLY ASSOCIATIVE SIMULATION
+    print("\n\n\n" + "=" * 38)
     print("FULLY ASSOCIATIVE MAPPING SIMULATION")
-    print("=" * 70)
+    print("=" * 38)
 
-    # Reset main memory
     main_memory = MainMemory(main_memory_size)
     for i in range(0, 2000, 64):
         main_memory.write(i, f"Data_{i}")
 
     print(f"Cache: {cache_size} bytes, Block: {block_size} bytes")
-    print(f"Number of lines: {num_lines} (any block can go anywhere)")
+    print(f"Number of lines: {num_lines}")
     print(f"Address bits: Offset={int(math.log2(block_size))}, Tag={32 - int(math.log2(block_size))}")
 
     mapping3 = FullyAssociative(num_lines, block_size)
     replacement3 = FIFOAlgorithm()
     write_policy3 = WriteBack(main_memory)
 
-    controller3 = CacheController(
-        cache_size, block_size, mapping3, replacement3, write_policy3, main_memory
-    )
+    controller3 = CacheController(cache_size, block_size, mapping3, replacement3, write_policy3, main_memory)
 
-    addresses3 = [ 0, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 128, 384, 0]
+    addresses3 = [ 0, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 128, 384, 0, 64 ]
 
     for addr in addresses3:
         print(f"\nAccessing address: {addr} (0x{addr:X})")
@@ -78,22 +76,24 @@ if __name__ == "__main__":
 
     controller3.write(0, "Modified_0")
 
-    controller3.read(1024)
+
+    addr = 1024
+    print(f"\nAccessing address: {addr} (0x{addr:X})")
+    controller3.read(addr)
 
     print(f"\nMemory state\n")
     print(main_memory.display_memory_state())
 
-
     controller3.display_cache_state()
-    print(f"\n{controller3.get_statistics()}")
 
 
 
 
 
-    print("\n\n" + "=" * 70)
-    print("SET-ASSOCIATIVE MAPPING SIMULATION (2-way)")
-    print("=" * 70)
+    # SET ASSOCIATIVE SIMULATION
+    print("\n\n" + "=" * 38)
+    print("SET-ASSOCIATIVE MAPPING SIMULATION")
+    print("=" * 38)
 
 
     main_memory = MainMemory(main_memory_size)
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     num_sets = 8
     associativity = 2
     print(f"Cache: {cache_size} bytes, Block: {block_size} bytes")
-    print(f"Sets: {num_sets}, Associativity: {associativity}-way")
+    print(f"Sets: {num_sets}, Associativity: 2 lines / set")
     print(
         f"Address bits: Offset={int(math.log2(block_size))}, "
         f"Set={int(math.log2(num_sets))}, "
@@ -114,10 +114,7 @@ if __name__ == "__main__":
     replacement2 = FIFOAlgorithm()
     write_policy2 = WriteBack(main_memory)
 
-    controller2 = CacheController(
-        cache_size, block_size, mapping2, replacement2, write_policy2, main_memory
-    )
-
+    controller2 = CacheController(cache_size, block_size, mapping2, replacement2, write_policy2, main_memory)
 
     addresses2 = [0, 512, 1024, 64, 128, 64]
 
@@ -127,8 +124,6 @@ if __name__ == "__main__":
         print(f"  Read: {data}")
 
     controller2.display_cache_state()
-    print(f"\n{controller2.get_statistics()}")
 
-    print("\n" + "=" * 70)
-    gui = CacheSimulatorGUI(controller2, controller2.get_statistics())
-    gui.run()
+    print("\n")
+    controller2.get_statistics()

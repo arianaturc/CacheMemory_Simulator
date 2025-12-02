@@ -10,5 +10,8 @@ class MainMemory:
         self.memory[address] = data
 
     def display_memory_state(self):
+        print("*" * 25)
+        print("Memory State:")
+        print("*" * 25)
         for address in self.memory:
             print(f"{address}: {self.memory[address]}")

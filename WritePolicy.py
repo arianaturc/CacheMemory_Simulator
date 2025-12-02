@@ -8,6 +8,6 @@ class WritePolicy(ABC):
     def handle_write_hit(self, cache_line: CacheLine, address, data):
         pass
 
-    '''@abstractmethod
-    def handle_write_miss(self, address: int, data):
-        pass'''
+    @abstractmethod
+    def handle_write_miss(self, address: int, data) -> bool:
+        pass

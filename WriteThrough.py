@@ -10,5 +10,6 @@ class WriteThrough(WritePolicy):
         cache_line.data = data
         self.main_memory.write(address, data)
 
-    '''def handle_write_miss(self, address: int, data):
-        self.main_memory.write(address, data)'''
+    def handle_write_miss(self, address: int, data):
+        self.main_memory.write(address, data)
+        return True
