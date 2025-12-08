@@ -1,13 +1,13 @@
 import math
-from CacheController import CacheController
-from CacheSimulatorGUI import CacheSimulatorGUI
-from DirectMapping import DirectMapping
-from FIFOAlgorithm import FIFOAlgorithm
-from FullyAssociative import FullyAssociative
-from LRUAlgorithm import LRUAlgorithm
-from MainMemory import MainMemory
-from SetAssociative import SetAssociative
-from WriteBack import WriteBack
+from Controller.CacheController import CacheController
+from View.CacheSimulatorGUI import CacheSimulatorGUI
+from Model.DirectMapping import DirectMapping
+from Model.FIFOAlgorithm import FIFOAlgorithm
+from Model.FullyAssociative import FullyAssociative
+from Model.LRUAlgorithm import LRUAlgorithm
+from Model.MainMemory import MainMemory
+from Model.SetAssociative import SetAssociative
+from Model.WriteBack import WriteBack
 
 
 if __name__ == "__main__":
@@ -36,12 +36,13 @@ if __name__ == "__main__":
 
     controller = CacheController(cache_size, block_size, mapping, replacement, write_policy, main_memory)
 
-    addresses = [0, 64, 70, 0, 256, 64, 1024]
+    addresses = [0, 64, 70, 0, 64, 1024]
 
     for addr in addresses:
         print(f"\nAccessing address: {addr} (0x{addr:X})")
         data = controller.read(addr)
         print(f"  Read: {data}")
+
 
     controller.display_cache_state()
     controller.get_statistics()
