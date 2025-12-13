@@ -23,7 +23,8 @@ class FIFOAlgorithm(ReplacementAlgorithm):
 
     def remove_from_queue(self, line_idx: int) -> None:
         if line_idx in self.queue:
-            self.queue.pop()
+            self.queue.remove(line_idx)
+
 
 
 

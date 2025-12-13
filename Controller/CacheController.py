@@ -38,6 +38,13 @@ class CacheController:
         else:
             raise ValueError("Invalid mapping strategy")
 
+        if mapping_type == "SetAssoc":
+            if self.num_lines % associativity != 0:
+                raise ValueError(
+                    f"{self.num_lines} cache lines "
+                    f"cannot be divided into sets of {associativity} lines."
+                )
+
         # --- Replacement Algorithm ---
         if replacement_policy == "LRU":
             self.replacement_algorithm = LRUAlgorithm()
@@ -113,10 +120,10 @@ class CacheController:
 
                 return
 
-            self.statistics.count_misses()
-            allocate = self.write_policy.handle_write_miss(address, data)
-            if allocate:
-                self.handle_miss(address, tag, candidate_lines, is_write=True, write_data=data)
+        self.statistics.count_misses()
+        allocate = self.write_policy.handle_write_miss(address, data)
+        if allocate:
+            self.handle_miss(address, tag, candidate_lines, is_write=True, write_data=data)
 
 
     def handle_miss(self, address: int, tag: int, candidate_lines, is_write: bool, write_data = None):
@@ -152,7 +159,11 @@ class CacheController:
         line.valid = True
         line.tag = tag
         line.data = write_data if is_write else data
-        line.dirtyBit = is_write
+
+        if isinstance(self.write_policy, WriteBack):
+            line.dirtyBit = is_write
+        else:
+            line.dirtyBit = False
 
         self.line_addresses[line_index] = address
 

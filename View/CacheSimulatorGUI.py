@@ -11,35 +11,53 @@ class CacheSimulatorGUI:
         enable_high_dpi()
         pygame.init()
 
-        self.WIDTH = 1500
-        self.HEIGHT = 1000
+        self.base_width = 1500
+        self.base_height = 900
+
+        try:
+            import ctypes
+            dpi_scale = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100.0
+        except Exception:
+            dpi_scale = 1.0
+
+        display_info = pygame.display.Info()
+        screen_w, screen_h = display_info.current_w, display_info.current_h
+
+        fit_scale_w = screen_w * 0.9 / self.base_width
+        fit_scale_h = screen_h * 0.9 / self.base_height
+
+        self.scale = max(1.0, min(dpi_scale, fit_scale_w, fit_scale_h))
+
+        def sx(v): return int(v * self.scale)
+        def sy(v): return int(v * self.scale)
+        self.sx = sx
+        self.sy = sy
+
+        self.WIDTH = self.sx(self.base_width)
+        self.HEIGHT = self.sy(self.base_height)
+
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         pygame.display.set_caption("Cache Memory Simulator")
 
-        # ---------------- CUSTOM DARK MAUVE PALETTE ----------------
         self.COFFEE_BEAN = (36, 23, 21)       # #241715  (main dark background)
         self.DEEP_MOCHA = (64, 42, 44)        # #402A2C  (panels, bars, UI blocks)
         self.MAUVE_SHADOW = (112, 61, 87)     # #703D57  (buttons, accents)
         self.DUSTY_MAUVE = (149, 113, 134)    # #957186  (highlight, text accents)
         self.PASTEL_PETAL = (217, 184, 196)   # #D9B8C4  (selected button fill)
 
-        # Text colors
         self.WHITE = (255, 255, 255)
         self.LIGHT_TEXT = (230, 220, 220)
 
-        # Status colors
         self.GREEN = (60, 179, 113)
         self.RED = (220, 20, 60)
 
-        # -------------- FONTS -------------------
-        self.font = pygame.font.Font(None, 28)
-        self.small_font = pygame.font.Font(None, 22)
-        self.tiny_font = pygame.font.Font(None, 18)
-        self.title_font = pygame.font.Font(None, 36)
-        self.header_font = pygame.font.Font(None, 30)
+        self.font = pygame.font.Font(None, int(28 * self.scale))
+        self.small_font = pygame.font.Font(None, int(22 * self.scale))
+        self.tiny_font = pygame.font.Font(None, int(18 * self.scale))
+        self.title_font = pygame.font.Font(None, int(36 * self.scale))
+        self.header_font = pygame.font.Font(None, int(30 * self.scale))
 
-        # ------------- DEFAULT VALUES ----------
-        self.input_cache_size = "1024"
+        self.input_cache_size = "256"
         self.input_block_size = "64"
         self.main_memory_size = 65536
 
@@ -56,20 +74,20 @@ class CacheSimulatorGUI:
         self.message_color = self.WHITE
         self.message_timer = 0
 
-        # View mode
         self.view_mode = "cache"
 
-        # Scrolling
         self.memory_scroll = 0
         self.cache_scroll = 0
 
-        # Main memory
         self.main_memory = MainMemory(self.main_memory_size)
+        self.main_memory.write(0, f"DATA_{0}")
         for i in range(0, 2000, 64):
             self.main_memory.write(i, f"DATA_{i}")
 
         self.buttons = self.create_buttons()
         self.create_controller()
+
+
 
     def safe_int(self, value, default):
         try:
@@ -78,10 +96,9 @@ class CacheSimulatorGUI:
         except:
             return default
 
-    # --------------------- CREATE CONTROLLER -------------------------
     def create_controller(self):
         try:
-            cache_size = self.safe_int(self.input_cache_size, 1024)
+            cache_size = self.safe_int(self.input_cache_size, 256)
             block_size = self.safe_int(self.input_block_size, 64)
 
             if self.mapping_type == "SetAssoc":
@@ -115,26 +132,29 @@ class CacheSimulatorGUI:
     def create_buttons(self):
         buttons = {}
 
-        buttons['apply'] = pygame.Rect(150, 200, 200, 40)
+        buttons['apply'] = pygame.Rect(
+            self.sx(150), self.sy(200),
+            self.sx(200), self.sy(40)
+        )
 
-        buttons['view_cache'] = pygame.Rect(520, 15, 150, 40)
-        buttons['view_memory'] = pygame.Rect(690, 15, 150, 40)
-        buttons['view_stats'] = pygame.Rect(860, 15, 150, 40)
+        buttons['view_cache'] = pygame.Rect(self.sx(520), self.sy(15), self.sx(150), self.sy(40))
+        buttons['view_memory'] = pygame.Rect(self.sx(690), self.sy(15), self.sx(150), self.sy(40))
+        buttons['view_stats'] = pygame.Rect(self.sx(860), self.sy(15), self.sx(150), self.sy(40))
 
-        buttons['direct'] = pygame.Rect(30, 300, 130, 40)
-        buttons['set'] = pygame.Rect(175, 300, 130, 40)
-        buttons['full'] = pygame.Rect(320, 300, 150, 40)
+        buttons['direct'] = pygame.Rect(self.sx(30), self.sy(300), self.sx(130), self.sy(40))
+        buttons['set'] = pygame.Rect(self.sx(175), self.sy(300), self.sx(130), self.sy(40))
+        buttons['full'] = pygame.Rect(self.sx(320), self.sy(300), self.sx(150), self.sy(40))
 
-        buttons['lru'] = pygame.Rect(30, 380, 110, 40)
-        buttons['fifo'] = pygame.Rect(155, 380, 110, 40)
-        buttons['random'] = pygame.Rect(280, 380, 110, 40)
+        buttons['lru'] = pygame.Rect(self.sx(30), self.sy(380), self.sx(110), self.sy(40))
+        buttons['fifo'] = pygame.Rect(self.sx(155), self.sy(380), self.sx(110), self.sy(40))
+        buttons['random'] = pygame.Rect(self.sx(280), self.sy(380), self.sx(110), self.sy(40))
 
-        buttons['wb'] = pygame.Rect(30, 480, 180, 40)
-        buttons['wt'] = pygame.Rect(225, 480, 180, 40)
+        buttons['wb'] = pygame.Rect(self.sx(30), self.sy(480), self.sx(180), self.sy(40))
+        buttons['wt'] = pygame.Rect(self.sx(225), self.sy(480), self.sx(180), self.sy(40))
 
-        buttons['read'] = pygame.Rect(30, 600, 130, 45)
-        buttons['write'] = pygame.Rect(180, 600, 130, 45)
-        buttons['reset'] = pygame.Rect(330, 600, 130, 45)
+        buttons['read'] = pygame.Rect(self.sx(30), self.sy(600), self.sx(130), self.sy(45))
+        buttons['write'] = pygame.Rect(self.sx(180), self.sy(600), self.sx(130), self.sy(45))
+        buttons['reset'] = pygame.Rect(self.sx(330), self.sy(600), self.sx(130), self.sy(45))
 
         return buttons
 
@@ -151,8 +171,8 @@ class CacheSimulatorGUI:
             color = bg_color
             text_color = self.WHITE
 
-        pygame.draw.rect(self.screen, color, rect, border_radius=8)
-        pygame.draw.rect(self.screen, self.PASTEL_PETAL, rect, 2, border_radius=8)
+        pygame.draw.rect(self.screen, color, rect, border_radius=int(8 * self.scale))
+        pygame.draw.rect(self.screen, self.PASTEL_PETAL, rect, int(2 * self.scale), border_radius=int(8 * self.scale))
 
         text_surf = self.font.render(text, True, text_color)
         text_rect = text_surf.get_rect(center=rect.center)
@@ -160,37 +180,38 @@ class CacheSimulatorGUI:
 
     # ---------------------- DRAW INPUT BOX -------------------------
     def draw_input_box(self, x, y, w, h, label, value, active):
+        x, y, w, h = self.sx(x), self.sy(y), self.sx(w), self.sy(h)
+
         label_surf = self.small_font.render(label, True, self.PASTEL_PETAL)
-        self.screen.blit(label_surf, (x, y - 25))
+        self.screen.blit(label_surf, (x, y - self.sy(25)))
 
         box = pygame.Rect(x, y, w, h)
         pygame.draw.rect(self.screen, self.DEEP_MOCHA, box)
 
         border_color = self.PASTEL_PETAL if active else self.DUSTY_MAUVE
-        pygame.draw.rect(self.screen, border_color, box, 3, border_radius=5)
+        pygame.draw.rect(self.screen, border_color, box, int(3 * self.scale), border_radius=int(5 * self.scale))
 
         txt = self.font.render(value, True, self.WHITE)
-        self.screen.blit(txt, (box.x + 8, box.y + 8))
+        self.screen.blit(txt, (box.x + self.sx(8), box.y + self.sy(8)))
 
         return box
 
     # ---------------------- DRAW CACHE VIEW -------------------------
     def draw_cache_view(self):
-        start_x = 540
-        start_y = 175
-        item_height = 35
-        padding = 10
+        start_x = self.sx(540)
+        start_y = self.sy(175)
+        item_height = self.sy(35)
+        padding = self.sx(10)
 
         title = self.header_font.render("Cache Memory State", True, self.PASTEL_PETAL)
-        self.screen.blit(title, (start_x, 80))
+        self.screen.blit(title, (start_x, self.sy(80)))
 
         info = f"Mapping: {self.mapping_type} | Replacement: {self.replacement_policy} | Write: {self.write_policy}"
         info_surf = self.small_font.render(info, True, self.DUSTY_MAUVE)
-        self.screen.blit(info_surf, (start_x, 110))
+        self.screen.blit(info_surf, (start_x, self.sy(110)))
 
-        # Header
-        header_rect = pygame.Rect(start_x, 140, 820, 30)
-        pygame.draw.rect(self.screen, self.MAUVE_SHADOW, header_rect, border_radius=5)
+        header_rect = pygame.Rect(start_x, self.sy(140), self.sx(820), self.sy(30))
+        pygame.draw.rect(self.screen, self.MAUVE_SHADOW, header_rect, border_radius=int(5 * self.scale))
 
         x_offset = start_x + padding
         headers = ["Line"]
@@ -200,55 +221,56 @@ class CacheSimulatorGUI:
 
         for h in headers:
             surf = self.small_font.render(h, True, self.WHITE)
-            self.screen.blit(surf, (x_offset, 146))
-            x_offset += 90
+            self.screen.blit(surf, (x_offset, self.sy(146)))
+            x_offset += self.sx(90)
 
         lines = self.controller.cache_memory.lines
         y = start_y
 
         for idx, line in enumerate(lines):
-            row_rect = pygame.Rect(start_x, y, 820, item_height)
+            row_rect = pygame.Rect(start_x, y, self.sx(820), item_height)
 
             bg = self.DEEP_MOCHA if line.valid else self.COFFEE_BEAN
-            pygame.draw.rect(self.screen, bg, row_rect, border_radius=5)
-            pygame.draw.rect(self.screen, self.MAUVE_SHADOW, row_rect, 1, border_radius=5)
+            pygame.draw.rect(self.screen, bg, row_rect, border_radius=int(5 * self.scale))
+            pygame.draw.rect(self.screen, self.MAUVE_SHADOW, row_rect, int(1 * self.scale), border_radius=int(5 * self.scale))
 
             x_offset = start_x + padding
-            self.screen.blit(self.small_font.render(str(idx), True, self.PASTEL_PETAL), (x_offset, y + 8))
-            x_offset += 90
+            self.screen.blit(self.small_font.render(str(idx), True, self.PASTEL_PETAL), (x_offset, y + self.sy(8)))
+            x_offset += self.sx(90)
 
             if self.mapping_type == "SetAssoc":
                 assoc = self.safe_int(self.input_associativity, 2)
                 set_id = idx // assoc
-                self.screen.blit(self.small_font.render(str(set_id), True, self.DUSTY_MAUVE), (x_offset, y + 8))
-                x_offset += 90
+                self.screen.blit(self.small_font.render(str(set_id), True, self.DUSTY_MAUVE), (x_offset, y + self.sy(8)))
+                x_offset += self.sx(90)
 
             if line.valid:
-                self.screen.blit(self.small_font.render("1", True, self.GREEN), (x_offset, y + 8))
-                x_offset += 90
+                self.screen.blit(self.small_font.render("1", True, self.GREEN), (x_offset, y + self.sy(8)))
+                x_offset += self.sx(90)
 
-                self.screen.blit(self.small_font.render(f"0x{line.tag:04X}", True, self.WHITE), (x_offset, y + 8))
-                x_offset += 120
+                self.screen.blit(self.small_font.render(f"0x{line.tag:04X}", True, self.WHITE), (x_offset, y + self.sy(8)))
+                x_offset += self.sx(120)
 
                 dirty_color = self.RED if line.dirtyBit else self.GREEN
-                self.screen.blit(self.small_font.render("1" if line.dirtyBit else "0", True, dirty_color), (x_offset, y + 8))
-                x_offset += 90
+                self.screen.blit(self.small_font.render("1" if line.dirtyBit else "0", True, dirty_color),
+                                 (x_offset, y + self.sy(8)))
+                x_offset += self.sx(90)
 
                 data = str(line.data)
                 if len(data) > 30:
                     data = data[:30] + "..."
-                self.screen.blit(self.small_font.render(data, True, self.DUSTY_MAUVE), (x_offset, y + 8))
+                self.screen.blit(self.small_font.render(data, True, self.DUSTY_MAUVE), (x_offset, y + self.sy(8)))
 
-            y += item_height + 3
+            y += item_height + self.sy(3)
 
     # ---------------------- DRAW MEMORY VIEW -------------------------
     def draw_memory_view(self):
-        start_x = 540
-        start_y = 140
-        item_height = 32
+        start_x = self.sx(540)
+        start_y = self.sy(140)
+        item_height = self.sy(32)
 
         title = self.header_font.render("Main Memory Contents", True, self.PASTEL_PETAL)
-        self.screen.blit(title, (start_x, 80))
+        self.screen.blit(title, (start_x, self.sy(80)))
 
         sorted_addrs = sorted(self.main_memory.memory.keys())
         max_count = 20
@@ -260,29 +282,29 @@ class CacheSimulatorGUI:
             addr = sorted_addrs[i]
             data = self.main_memory.memory[addr]
 
-            row = pygame.Rect(start_x, y, 820, item_height)
+            row = pygame.Rect(start_x, y, self.sx(820), item_height)
             bg = self.DEEP_MOCHA if i % 2 == 0 else self.COFFEE_BEAN
-            pygame.draw.rect(self.screen, bg, row, border_radius=5)
-            pygame.draw.rect(self.screen, self.MAUVE_SHADOW, row, 1, border_radius=5)
+            pygame.draw.rect(self.screen, bg, row, border_radius=int(5 * self.scale))
+            pygame.draw.rect(self.screen, self.MAUVE_SHADOW, row, int(1 * self.scale), border_radius=int(5 * self.scale))
 
             text = self.small_font.render(f"0x{addr:04X}  ({addr})", True, self.WHITE)
-            self.screen.blit(text, (start_x + 15, y + 6))
+            self.screen.blit(text, (start_x + self.sx(15), y + self.sy(6)))
 
             data_str = str(data)
             if len(data_str) > 35:
                 data_str = data_str[:35] + "..."
             data_surf = self.small_font.render(f"→ {data_str}", True, self.DUSTY_MAUVE)
-            self.screen.blit(data_surf, (start_x + 280, y + 6))
+            self.screen.blit(data_surf, (start_x + self.sx(280), y + self.sy(6)))
 
-            y += item_height + 2
+            y += item_height + self.sy(2)
 
     # ---------------------- DRAW STATISTICS -------------------------
     def draw_statistics_view(self):
-        start_x = 600
-        start_y = 160
+        start_x = self.sx(600)
+        start_y = self.sy(160)
 
         title = self.header_font.render("Cache Performance Statistics", True, self.PASTEL_PETAL)
-        self.screen.blit(title, (start_x, 80))
+        self.screen.blit(title, (start_x, self.sy(80)))
 
         stats = self.controller.statistics
         total = stats.hits + stats.misses
@@ -299,36 +321,36 @@ class CacheSimulatorGUI:
 
         y = start_y
         for label, value, col in items:
-            box = pygame.Rect(start_x, y, 600, 55)
-            pygame.draw.rect(self.screen, self.DEEP_MOCHA, box, border_radius=8)
-            pygame.draw.rect(self.screen, col, box, 2, border_radius=8)
+            box = pygame.Rect(start_x, y, self.sx(600), self.sy(55))
+            pygame.draw.rect(self.screen, self.DEEP_MOCHA, box, border_radius=int(8 * self.scale))
+            pygame.draw.rect(self.screen, col, box, int(2 * self.scale), border_radius=int(8 * self.scale))
 
             label_surf = self.font.render(label + ":", True, self.WHITE)
-            self.screen.blit(label_surf, (start_x + 20, y + 15))
+            self.screen.blit(label_surf, (start_x + self.sx(20), y + self.sy(15)))
 
             value_surf = self.title_font.render(value, True, col)
-            val_rect = value_surf.get_rect(right=start_x + 580, centery=y + 27)
+            val_rect = value_surf.get_rect(right=start_x + self.sx(580), centery=y + self.sy(27))
             self.screen.blit(value_surf, val_rect)
 
-            y += 70
+            y += self.sy(70)
 
     # --------------------------- MAIN DRAW -----------------------------
     def draw(self):
 
-        # DARK BACKGROUND
         self.screen.fill(self.COFFEE_BEAN)
 
-        # Top navigation bar
-        nav_bar = pygame.Rect(500, 0, self.WIDTH - 500, 70)
+        left_panel_width = self.sx(500)
+        nav_bar = pygame.Rect(left_panel_width, 0, self.WIDTH - left_panel_width, self.sy(70))
         pygame.draw.rect(self.screen, self.DEEP_MOCHA, nav_bar)
-        pygame.draw.line(self.screen, self.MAUVE_SHADOW, (500, 70), (self.WIDTH, 70), 2)
+        pygame.draw.line(self.screen, self.MAUVE_SHADOW,
+                         (left_panel_width, self.sy(70)),
+                         (self.WIDTH, self.sy(70)),
+                         int(2 * self.scale))
 
-        # Nav buttons
         self.draw_button(self.buttons['view_cache'], "CACHE", self.view_mode == "cache")
         self.draw_button(self.buttons['view_memory'], "MEMORY", self.view_mode == "memory")
         self.draw_button(self.buttons['view_stats'], "STATISTICS", self.view_mode == "statistics")
 
-        # Render selected view
         if self.view_mode == "cache":
             self.draw_cache_view()
         elif self.view_mode == "memory":
@@ -336,10 +358,8 @@ class CacheSimulatorGUI:
         else:
             self.draw_statistics_view()
 
-        # Left panel
         self.draw_left_panel()
 
-        # Update screen
         if self.message_timer > 0:
             self.message_timer -= 1
 
@@ -347,17 +367,20 @@ class CacheSimulatorGUI:
 
     # --------------------------- LEFT PANEL -----------------------------
     def draw_left_panel(self):
-        panel = pygame.Rect(0, 0, 500, self.HEIGHT)
+        panel_width = self.sx(500)
+        panel = pygame.Rect(0, 0, panel_width, self.HEIGHT)
         pygame.draw.rect(self.screen, self.DEEP_MOCHA, panel)
-        pygame.draw.line(self.screen, self.MAUVE_SHADOW, (500, 0), (500, self.HEIGHT), 3)
+        pygame.draw.line(self.screen, self.MAUVE_SHADOW,
+                         (panel_width, 0),
+                         (panel_width, self.HEIGHT),
+                         int(3 * self.scale))
 
         title = self.title_font.render("Control Panel", True, self.PASTEL_PETAL)
-        self.screen.blit(title, (160, 30))
+        self.screen.blit(title, (self.sx(160), self.sy(30)))
 
         config_label = self.font.render("Cache Configuration", True, self.PASTEL_PETAL)
-        self.screen.blit(config_label, (30, 70))
+        self.screen.blit(config_label, (self.sx(30), self.sy(70)))
 
-        # Inputs
         self.cache_size_box = self.draw_input_box(30, 125, 200, 40,
                                                   "Cache Size (bytes)",
                                                   self.input_cache_size,
@@ -368,12 +391,10 @@ class CacheSimulatorGUI:
                                                   self.input_block_size,
                                                   self.active_input == "block")
 
-        # APPLY
         self.draw_button(self.buttons['apply'], "APPLY SETTINGS", False, self.MAUVE_SHADOW)
 
-        # Mapping
         mapping_label = self.font.render("Mapping Strategy", True, self.PASTEL_PETAL)
-        self.screen.blit(mapping_label, (30, 270))
+        self.screen.blit(mapping_label, (self.sx(30), self.sy(270)))
 
         self.draw_button(self.buttons['direct'], "Direct", self.mapping_type == "Direct")
         self.draw_button(self.buttons['set'], "Set-Assoc", self.mapping_type == "SetAssoc")
@@ -391,41 +412,41 @@ class CacheSimulatorGUI:
             current_y += 70
 
         repl_label = self.font.render("Replacement Policy", True, self.PASTEL_PETAL)
-        self.screen.blit(repl_label, (30, current_y + 10))
+        self.screen.blit(repl_label, (self.sx(30), self.sy(current_y + 30)))
 
-        self.buttons['lru'].y = current_y + 50
-        self.buttons['fifo'].y = current_y + 50
-        self.buttons['random'].y = current_y + 50
+        self.buttons['lru'].y = self.sy(current_y + 60)
+        self.buttons['fifo'].y = self.sy(current_y + 60)
+        self.buttons['random'].y = self.sy(current_y + 60)
 
         self.draw_button(self.buttons['lru'], "LRU", self.replacement_policy == "LRU")
         self.draw_button(self.buttons['fifo'], "FIFO", self.replacement_policy == "FIFO")
         self.draw_button(self.buttons['random'], "Random", self.replacement_policy == "Random")
 
-        current_y += 135
+        current_y += 100
 
         write_label = self.font.render("Write Policy", True, self.PASTEL_PETAL)
-        self.screen.blit(write_label, (30, current_y + 10))
+        self.screen.blit(write_label, (self.sx(30), self.sy(current_y + 20)))
 
-        self.buttons['wb'].y = current_y + 50
-        self.buttons['wt'].y = current_y + 50
+        self.buttons['wb'].y = self.sy(current_y + 50)
+        self.buttons['wt'].y = self.sy(current_y + 50)
 
         self.draw_button(self.buttons['wb'], "Write-Back", self.write_policy == "WriteBack")
         self.draw_button(self.buttons['wt'], "Write-Through", self.write_policy == "WriteThrough")
 
-        current_y += 135
+        current_y += 100
 
         ops_label = self.font.render("Operations", True, self.PASTEL_PETAL)
-        self.screen.blit(ops_label, (30, current_y + 10))
+        self.screen.blit(ops_label, (self.sx(30), self.sy(current_y + 10)))
 
-        self.buttons['read'].y = current_y + 50
-        self.buttons['write'].y = current_y + 50
-        self.buttons['reset'].y = current_y + 50
+        self.buttons['read'].y = self.sy(current_y + 30)
+        self.buttons['write'].y = self.sy(current_y + 30)
+        self.buttons['reset'].y = self.sy(current_y + 30)
 
         self.draw_button(self.buttons['read'], "READ", False, self.GREEN)
         self.draw_button(self.buttons['write'], "WRITE", False, self.RED)
         self.draw_button(self.buttons['reset'], "RESET", False, self.MAUVE_SHADOW)
 
-        current_y += 150
+        current_y += 120
 
         self.address_box = self.draw_input_box(30, current_y, 200, 40,
                                                "Address (decimal)",
@@ -437,12 +458,12 @@ class CacheSimulatorGUI:
                                             self.input_data,
                                             self.active_input == "data")
 
-        # Message
         if self.message and self.message_timer > 0:
             msg_y = current_y + 60
-            msg_bg = pygame.Rect(20, msg_y, 460, 50)
-            pygame.draw.rect(self.screen, self.DEEP_MOCHA, msg_bg, border_radius=8)
-            pygame.draw.rect(self.screen, self.message_color, msg_bg, 3, border_radius=8)
+            msg_bg = pygame.Rect(self.sx(20), self.sy(msg_y),
+                                 self.sx(460), self.sy(50))
+            pygame.draw.rect(self.screen, self.DEEP_MOCHA, msg_bg, border_radius=int(8 * self.scale))
+            pygame.draw.rect(self.screen, self.message_color, msg_bg, int(3 * self.scale), border_radius=int(8 * self.scale))
 
             msg_surf = self.small_font.render(self.message, True, self.message_color)
             msg_rect = msg_surf.get_rect(center=msg_bg.center)
@@ -465,7 +486,6 @@ class CacheSimulatorGUI:
             self.create_controller()
             return
 
-        # INPUT FOCUS
         if self.cache_size_box.collidepoint(pos):
             self.active_input = "cache"
         elif self.block_size_box.collidepoint(pos):
@@ -479,7 +499,6 @@ class CacheSimulatorGUI:
         else:
             self.active_input = None
 
-        # Mapping
         if self.buttons['direct'].collidepoint(pos):
             self.mapping_type = "Direct"
         elif self.buttons['set'].collidepoint(pos):
@@ -487,7 +506,6 @@ class CacheSimulatorGUI:
         elif self.buttons['full'].collidepoint(pos):
             self.mapping_type = "FullyAssoc"
 
-        # Replacement
         if self.buttons['lru'].collidepoint(pos):
             self.replacement_policy = "LRU"
         elif self.buttons['fifo'].collidepoint(pos):
@@ -495,13 +513,11 @@ class CacheSimulatorGUI:
         elif self.buttons['random'].collidepoint(pos):
             self.replacement_policy = "Random"
 
-        # Write policy
         if self.buttons['wb'].collidepoint(pos):
             self.write_policy = "WriteBack"
         elif self.buttons['wt'].collidepoint(pos):
             self.write_policy = "WriteThrough"
 
-        # READ
         if self.buttons['read'].collidepoint(pos):
             if self.input_address.isdigit():
                 try:
@@ -518,7 +534,6 @@ class CacheSimulatorGUI:
                 self.message_color = self.RED
                 self.message_timer = 180
 
-        # WRITE
         elif self.buttons['write'].collidepoint(pos):
             if self.input_address.isdigit():
                 try:
@@ -536,7 +551,6 @@ class CacheSimulatorGUI:
                 self.message_color = self.RED
                 self.message_timer = 180
 
-        # RESET
         elif self.buttons['reset'].collidepoint(pos):
             self.main_memory = MainMemory(self.main_memory_size)
             for i in range(0, 2000, 64):
@@ -604,7 +618,7 @@ class CacheSimulatorGUI:
         sys.exit()
 
 
-# Enable High DPI
+
 def enable_high_dpi(scale=3):
     os.environ["SDL_VIDEO_ALLOW_HIGHDPI"] = "1"
     try:
@@ -614,6 +628,4 @@ def enable_high_dpi(scale=3):
         pass
 
 
-if __name__ == "__main__":
-    app = CacheSimulatorGUI()
-    app.run()
+
