@@ -100,5 +100,5 @@ All major components of the simulator were **individually tested using pytest** 
 ---
 
 ## 📷 GUI Preview 
-
+![GUI Screenshot](gui_cache_memory.png)
 
